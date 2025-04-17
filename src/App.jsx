@@ -22,6 +22,7 @@ function App() {
       try {
         await initLiff();
         setIsLiffInitialized(true);
+        setError(null); // エラーをクリア
         
         // LIFFが初期化され、ログインしているかチェック
         if (liff.isLoggedIn()) {
@@ -32,13 +33,15 @@ function App() {
             setName(profile.displayName); // ユーザー名を自動入力
           } catch (error) {
             console.error('プロフィール取得エラー', error);
-            setError('プロフィール情報の取得に失敗しました。');
+            // プロフィール取得エラーは致命的ではないので、アプリは引き続き使用可能
           }
         }
       } catch (error) {
         console.error('LIFF初期化エラー', error);
-        setError('このアプリはLINE上からのみ利用可能です。LINEアプリから開いてください。');
-        setIsLiffInitialized(false);
+        // エラーメッセージを設定するが、isLiffInitializedはtrueに設定
+        // これにより、LINEから開いた場合でもアプリが使用可能になる
+        setError('LIFFの初期化中にエラーが発生しましたが、アプリは引き続き使用できます。');
+        setIsLiffInitialized(true);
       }
     };
     
@@ -132,12 +135,6 @@ function App() {
       
       {error && <p className="error-message">{error}</p>}
       
-      {!isLiffInitialized && (
-        <div className="liff-error">
-          <p>このアプリはLINE上からのみ利用可能です。</p>
-          <p>LINEアプリから開いてください。</p>
-        </div>
-      )}
       
       {isLiffInitialized && (
         <>
