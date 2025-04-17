@@ -14,22 +14,31 @@ function App() {
   const [error, setError] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
+  const [isLiffInitialized, setIsLiffInitialized] = useState(false);
 
   // LIFFの初期化
   useEffect(() => {
     const initializeLiff = async () => {
-      await initLiff();
-      
-      // LIFFが初期化され、ログインしているかチェック
-      if (liff.isLoggedIn()) {
-        setIsLoggedIn(true);
-        try {
-          const profile = await liff.getProfile();
-          setUserProfile(profile);
-          setName(profile.displayName); // ユーザー名を自動入力
-        } catch (error) {
-          console.error('プロフィール取得エラー', error);
+      try {
+        await initLiff();
+        setIsLiffInitialized(true);
+        
+        // LIFFが初期化され、ログインしているかチェック
+        if (liff.isLoggedIn()) {
+          setIsLoggedIn(true);
+          try {
+            const profile = await liff.getProfile();
+            setUserProfile(profile);
+            setName(profile.displayName); // ユーザー名を自動入力
+          } catch (error) {
+            console.error('プロフィール取得エラー', error);
+            setError('プロフィール情報の取得に失敗しました。');
+          }
         }
+      } catch (error) {
+        console.error('LIFF初期化エラー', error);
+        setError('このアプリはLINE上からのみ利用可能です。LINEアプリから開いてください。');
+        setIsLiffInitialized(false);
       }
     };
     
@@ -121,72 +130,84 @@ function App() {
     <div className="App">
       <h1>おぐリザーブ</h1>
       
-      {/* ユーザープロフィール表示 */}
-      {isLoggedIn && userProfile && (
-        <div className="user-profile">
-          <img src={userProfile.pictureUrl} alt={userProfile.displayName} className="profile-image" />
-          <p>ようこそ、{userProfile.displayName}さん</p>
+      {error && <p className="error-message">{error}</p>}
+      
+      {!isLiffInitialized && (
+        <div className="liff-error">
+          <p>このアプリはLINE上からのみ利用可能です。</p>
+          <p>LINEアプリから開いてください。</p>
         </div>
       )}
+      
+      {isLiffInitialized && (
+        <>
+          {/* ユーザープロフィール表示 */}
+          {isLoggedIn && userProfile && (
+            <div className="user-profile">
+              <img src={userProfile.pictureUrl} alt={userProfile.displayName} className="profile-image" />
+              <p>ようこそ、{userProfile.displayName}さん</p>
+            </div>
+          )}
 
-      {/* 予約作成フォーム */}
-      <form onSubmit={handleSubmit} className="reservation-form">
-        <h2>新しい予約を作成</h2>
-        <div className="form-group">
-          <label htmlFor="name">名前:</label>
-          <input
-            type="text"
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="date">日付:</label>
-          <input
-            type="date"
-            id="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="time">時間:</label>
-          <input
-            type="time"
-            id="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            required
-          />
-        </div>
-        <button type="submit" disabled={loading} className="submit-button">
-          {loading ? '作成中...' : '予約を作成'}
-        </button>
-        {error && <p className="error-message">{error}</p>}
-      </form>
+          {/* 予約作成フォーム */}
+          <form onSubmit={handleSubmit} className="reservation-form">
+            <h2>新しい予約を作成</h2>
+            <div className="form-group">
+              <label htmlFor="name">名前:</label>
+              <input
+                type="text"
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="date">日付:</label>
+              <input
+                type="date"
+                id="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="time">時間:</label>
+              <input
+                type="time"
+                id="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                required
+              />
+            </div>
+            <button type="submit" disabled={loading} className="submit-button">
+              {loading ? '作成中...' : '予約を作成'}
+            </button>
+          </form>
 
-      {/* 予約リスト */}
-      <div className="reservation-list">
-        <h2>既存の予約</h2>
-        {loading && <p>読み込み中...</p>}
-        {!loading && !error && reservations.length === 0 && <p>予約はありません。</p>}
-        {!loading && reservations.length > 0 && (
-          <ul>
-            {reservations.map((reservation) => (
-              <li key={reservation._id || reservation.id} className="reservation-item">
-                <strong>{reservation.name}</strong> - {
-                  reservation.datetime 
-                    ? new Date(reservation.datetime).toLocaleString('ja-JP')
-                    : `${new Date(reservation.date).toLocaleDateString()} ${reservation.time}`
-                }
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+          {/* 予約リスト */}
+          <div className="reservation-list">
+            <h2>既存の予約</h2>
+            {loading && <p>読み込み中...</p>}
+            {!loading && !error && reservations.length === 0 && <p>予約はありません。</p>}
+            {!loading && reservations.length > 0 && (
+              <ul>
+                {reservations.map((reservation) => (
+                  <li key={reservation._id || reservation.id} className="reservation-item">
+                    <strong>{reservation.name}</strong> - {
+                      reservation.datetime 
+                        ? new Date(reservation.datetime).toLocaleString('ja-JP')
+                        : `${new Date(reservation.date).toLocaleDateString()} ${reservation.time}`
+                    }
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

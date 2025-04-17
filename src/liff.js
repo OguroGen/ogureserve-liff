@@ -9,7 +9,10 @@ export const initLiff = async () => {
     if (!liff.isLoggedIn()) {
       liff.login();
     }
+    return true; // 初期化成功
   } catch (err) {
     console.error("LIFF init failed", err);
+    // エラーを上位に伝播させる
+    throw new Error("LINEアプリからアクセスしてください。");
   }
 };

@@ -106,6 +106,22 @@ input {
   border-left: 4px solid #d32f2f;
 }
 
+.liff-error {
+  margin: 30px auto;
+  padding: 20px;
+  background-color: #ffebee;
+  border-radius: 8px;
+  border-left: 4px solid #d32f2f;
+  max-width: 80%;
+  text-align: center;
+}
+
+.liff-error p {
+  margin: 10px 0;
+  font-size: 18px;
+  color: #d32f2f;
+}
+
 .reservation-list {
   background-color: white;
   padding: 20px;
