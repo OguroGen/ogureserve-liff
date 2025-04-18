@@ -28,7 +28,7 @@ export const initLiff = async () => {
   
   try {
     logDebug('liff.init()を呼び出します', { liffId: "2007259791-B9X2nL3V" });
-    await liff.init({ liffId: "2007259793" });
+    await liff.init({ liffId: "2007259791-B9X2nL3V" });
     logDebug('liff.init()が成功しました');
     
     const isInClient = liff.isInClient();
