@@ -5,7 +5,7 @@ export { liff }; // liffオブジェクトをエクスポート
 
 export const initLiff = async () => {
   try {
-    await liff.init({ liffId: "2007259793" });
+    await liff.init({ liffId: "2007259791-B9X2nL3V" });
     
     if (!liff.isLoggedIn()) {
       liff.login();
