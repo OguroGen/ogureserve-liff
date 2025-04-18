@@ -16,70 +16,27 @@ function App() {
   const [userProfile, setUserProfile] = useState(null);
   const [isLiffInitialized, setIsLiffInitialized] = useState(false);
 
-  // デバッグログ用の状態
-  const [debugLogs, setDebugLogs] = useState([]);
-  const [showDebug, setShowDebug] = useState(false);
-
-  // デバッグログを追加する関数
-  const addDebugLog = (message, data = null) => {
-    const timestamp = new Date().toISOString();
-    const logEntry = {
-      timestamp,
-      message,
-      data: data ? JSON.stringify(data, null, 2) : null
-    };
-    
-    setDebugLogs(prevLogs => [...prevLogs, logEntry]);
-    console.log(`[APP DEBUG] ${message}`, data || '');
-  };
-
   // LIFFの初期化
   useEffect(() => {
     const initializeLiff = async () => {
-      addDebugLog('App: LIFF初期化を開始します');
-      
       try {
-        addDebugLog('App: initLiff()を呼び出します');
         await initLiff();
-        addDebugLog('App: initLiff()が成功しました');
-        
         setIsLiffInitialized(true);
         setError(null); // エラーをクリア
         
         // LIFFが初期化され、ログインしているかチェック
-        const isLoggedIn = liff.isLoggedIn();
-        addDebugLog('App: liff.isLoggedIn()の結果', { isLoggedIn });
-        
-        if (isLoggedIn) {
+        if (liff.isLoggedIn()) {
           setIsLoggedIn(true);
           try {
-            addDebugLog('App: liff.getProfile()を呼び出します');
             const profile = await liff.getProfile();
-            addDebugLog('App: プロフィール取得成功', { 
-              userId: profile.userId,
-              displayName: profile.displayName,
-              hasPicture: !!profile.pictureUrl
-            });
-            
             setUserProfile(profile);
             setName(profile.displayName); // ユーザー名を自動入力
           } catch (error) {
-            addDebugLog('App: プロフィール取得エラー', { 
-              name: error.name,
-              message: error.message,
-              code: error.code
-            });
             console.error('プロフィール取得エラー', error);
             // プロフィール取得エラーは致命的ではないので、アプリは引き続き使用可能
           }
         }
       } catch (error) {
-        addDebugLog('App: LIFF初期化エラー', { 
-          name: error.name,
-          message: error.message,
-          stack: error.stack,
-          code: error.code
-        });
         console.error('LIFF初期化エラー', error);
         
         // エラーメッセージを設定するが、isLiffInitializedはtrueに設定
@@ -176,30 +133,6 @@ function App() {
   return (
     <div className="App">
       <h1>おぐリザーブ</h1>
-      
-      {/* デバッグ情報表示切り替えボタン */}
-      <button 
-        onClick={() => setShowDebug(!showDebug)} 
-        className="debug-toggle-button"
-      >
-        {showDebug ? 'デバッグ情報を隠す' : 'デバッグ情報を表示'}
-      </button>
-      
-      {/* デバッグ情報表示エリア */}
-      {showDebug && (
-        <div className="debug-container">
-          <h3>デバッグ情報</h3>
-          <div id="liff-debug" className="debug-logs">
-            {debugLogs.map((log, index) => (
-              <div key={index} className="debug-log-entry">
-                <div className="debug-timestamp">{log.timestamp}</div>
-                <div className="debug-message">{log.message}</div>
-                {log.data && <pre className="debug-data">{log.data}</pre>}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
       
       {error && <p className="error-message">{error}</p>}
       

@@ -146,63 +146,6 @@ input {
   border-bottom: none;
 }
 
-/* デバッグ情報表示用スタイル */
-.debug-toggle-button {
-  background-color: #f0ad4e;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  margin: 10px 0;
-}
-
-.debug-toggle-button:hover {
-  background-color: #ec971f;
-}
-
-.debug-container {
-  background-color: #f8f9fa;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 15px;
-  margin-bottom: 20px;
-  max-height: 300px;
-  overflow-y: auto;
-  font-family: monospace;
-  font-size: 12px;
-}
-
-.debug-logs {
-  text-align: left;
-}
-
-.debug-log-entry {
-  margin-bottom: 10px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
-}
-
-.debug-timestamp {
-  color: #6c757d;
-  font-size: 11px;
-}
-
-.debug-message {
-  color: #212529;
-  margin: 5px 0;
-}
-
-.debug-data {
-  background-color: #f1f1f1;
-  padding: 8px;
-  border-radius: 4px;
-  overflow-x: auto;
-  margin: 5px 0;
-  white-space: pre-wrap;
-  font-size: 11px;
-}
 
 /* レスポンシブデザイン */
 @media (max-width: 600px) {
@@ -220,9 +163,5 @@ input {
   
   .submit-button {
     width: 100%;
-  }
-  
-  .debug-container {
-    max-height: 200px;
   }
 }
