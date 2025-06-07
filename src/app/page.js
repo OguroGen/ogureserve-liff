@@ -1,143 +1,143 @@
-// src/app/page.js
 'use client'
 
-import { useState } from 'react'
+import { useApp } from '../contexts/AppContext'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 export default function HomePage() {
-  const [selectedStudents, setSelectedStudents] = useState([])
-  
-  // ダミーデータ（後でAPIから取得）
-  const students = [
-    {
-      id: 1,
-      name: '山田太郎',
-      classes: ['水曜16:30', '金曜17:30']
-    },
-    {
-      id: 2,
-      name: '山田花子',
-      classes: ['月曜15:00', '木曜15:00']
-    }
-  ]
+  const { user, organization, students, loading, isRegistered } = useApp()
+  const router = useRouter()
 
-  const handleStudentSelect = (studentId) => {
-    setSelectedStudents(prev => {
-      if (prev.includes(studentId)) {
-        return prev.filter(id => id !== studentId)
-      } else {
-        return [...prev, studentId]
+  useEffect(() => {
+    if (!loading) {
+      if (!organization) {
+        // 教室が指定されていない場合
+        router.push('/error?message=教室が指定されていません')
+        return
       }
-    })
+      
+      if (!isRegistered) {
+        // 未登録の場合、保護者登録画面へ
+        router.push('/register/guardian')
+        return
+      }
+      
+      if (students.length === 0) {
+        // 生徒が登録されていない場合
+        router.push('/register/student')
+        return
+      }
+    }
+  }, [loading, organization, isRegistered, students, router])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    )
   }
 
-  const selectAllStudents = () => {
-    if (selectedStudents.length === students.length) {
-      setSelectedStudents([])
-    } else {
-      setSelectedStudents(students.map(s => s.id))
-    }
+  if (!organization || !isRegistered || students.length === 0) {
+    return null // リダイレクト中
   }
 
   return (
     <div className="space-y-6">
-      {/* 生徒選択セクション */}
-      <section>
-        <h2 className="text-xl font-bold mb-4 text-gray-800">生徒を選択</h2>
-        
+      {/* 教室名表示 */}
+      <div className="bg-white rounded-lg shadow-md p-4">
+        <h2 className="text-lg font-bold text-center text-gray-800 mb-2">
+          {organization.name}
+        </h2>
+        <p className="text-sm text-gray-600 text-center">
+          こんにちは、{user?.displayName}さん
+        </p>
+      </div>
+
+      {/* 生徒選択 */}
+      <div className="bg-white rounded-lg shadow-md p-4">
+        <h3 className="text-md font-bold text-gray-800 mb-4">生徒を選択</h3>
         <div className="space-y-3">
-          {students.map(student => (
-            <StudentCard
-              key={student.id}
-              student={student}
-              isSelected={selectedStudents.includes(student.id)}
-              onSelect={() => handleStudentSelect(student.id)}
-            />
+          {students.map((student) => (
+            <StudentCard key={student.student_id} student={student} />
           ))}
           
-          {/* 全選択ボタン */}
-          <div 
-            onClick={selectAllStudents}
-            className="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-200 transition-colors"
-          >
-            <span className="text-gray-600 font-medium">
-              {selectedStudents.length === students.length ? '☑️' : '⭕'} すべての生徒を選択
-            </span>
-          </div>
+          {/* 全選択 */}
+          <label className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border-2 border-dashed border-blue-200">
+            <input type="checkbox" className="w-5 h-5 text-blue-600" />
+            <span className="text-blue-700 font-medium">すべての生徒を選択</span>
+          </label>
         </div>
-      </section>
+      </div>
 
       {/* アクションボタン */}
-      <section className="space-y-3">
-        <ActionButton
-          href="/absence"
+      <div className="space-y-3">
+        <ActionButton 
+          href="/absence" 
+          className="bg-red-500 hover:bg-red-600"
+          icon="✋"
           title="欠席連絡をする"
-          description="今日・明日以降の欠席を連絡"
-          color="red"
-          disabled={selectedStudents.length === 0}
+          description="体調不良などで欠席する場合"
         />
         
-        <ActionButton
-          href="/makeup"
+        <ActionButton 
+          href="/makeup" 
+          className="bg-green-500 hover:bg-green-600"
+          icon="🔄"
           title="振替予約をする"
-          description="空いているクラスに振替予約"
-          color="blue"
-          disabled={selectedStudents.length === 0}
+          description="欠席した分を別の日に振替"
         />
         
-        <ActionButton
-          href="/history"
+        <ActionButton 
+          href="/history" 
+          className="bg-blue-500 hover:bg-blue-600"
+          icon="📋"
           title="履歴を確認する"
-          description="欠席・振替の履歴を確認"
-          color="green"
+          description="過去の欠席・振替履歴"
         />
-      </section>
-    </div>
-  )
-}
-
-// 生徒カードコンポーネント
-function StudentCard({ student, isSelected, onSelect }) {
-  return (
-    <div 
-      onClick={onSelect}
-      className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
-        isSelected 
-          ? 'border-blue-500 bg-blue-50' 
-          : 'border-gray-200 bg-white hover:border-gray-300'
-      }`}
-    >
-      <div className="flex items-center">
-        <span className="text-xl mr-3">
-          {isSelected ? '☑️' : '⬜'}
-        </span>
-        <div>
-          <h3 className="font-bold text-gray-800">{student.name}</h3>
-          <p className="text-sm text-gray-600">
-            {student.classes.join(' / ')}
-          </p>
-        </div>
       </div>
     </div>
   )
 }
 
-// アクションボタンコンポーネント
-function ActionButton({ href, title, description, color, disabled = false }) {
-  const colors = {
-    red: disabled ? 'bg-gray-300' : 'bg-red-500 hover:bg-red-600',
-    blue: disabled ? 'bg-gray-300' : 'bg-blue-500 hover:bg-blue-600',
-    green: disabled ? 'bg-gray-300' : 'bg-green-500 hover:bg-green-600'
-  }
-
+// 生徒カードコンポーネント
+function StudentCard({ student }) {
   return (
-    <a 
-      href={disabled ? '#' : href}
-      className={`block w-full ${colors[color]} text-white rounded-lg p-4 text-center transition-colors ${
-        disabled ? 'cursor-not-allowed' : 'cursor-pointer'
-      }`}
-    >
-      <h3 className="font-bold text-lg">{title}</h3>
-      <p className="text-sm opacity-90">{description}</p>
+    <label className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 cursor-pointer">
+      <input type="checkbox" className="w-5 h-5 text-blue-600" />
+      <div className="flex-1">
+        <div className="font-medium text-gray-800">
+          {student.family_name} {student.given_name}
+        </div>
+        <div className="text-sm text-gray-600">
+          {student.enrollments?.map((enrollment, index) => (
+            <div key={enrollment.enrollment_id}>
+              {enrollment.class_sessions.locations.name} {' '}
+              {['日', '月', '火', '水', '木', '金', '土'][enrollment.class_sessions.day_of_week]}曜 {' '}
+              {enrollment.class_sessions.start_time}
+              {index < student.enrollments.length - 1 && ' / '}
+            </div>
+          ))}
+        </div>
+      </div>
+    </label>
+  )
+}
+
+// アクションボタンコンポーネント
+function ActionButton({ href, className, icon, title, description }) {
+  return (
+    <a href={href} className={`block ${className} text-white rounded-lg p-4 transition-colors`}>
+      <div className="flex items-center space-x-3">
+        <span className="text-2xl">{icon}</span>
+        <div>
+          <div className="font-bold text-lg">{title}</div>
+          <div className="text-sm opacity-90">{description}</div>
+        </div>
+      </div>
     </a>
   )
 }
