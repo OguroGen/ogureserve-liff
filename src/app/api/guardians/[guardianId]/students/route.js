@@ -3,7 +3,7 @@ import { createServerClient } from '../../../../../lib/supabase'
 
 export async function GET(request, { params }) {
   try {
-    const { guardianId } = params
+    const { guardianId } = await params
     const supabase = createServerClient()
     
     // 保護者に関連する生徒一覧を取得

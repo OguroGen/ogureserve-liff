@@ -10,20 +10,18 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!loading) {
-      if (!organization) {
-        // 教室が指定されていない場合
-        router.push('/error?message=教室が指定されていません')
-        return
-      }
-      
+      // 未登録ユーザーの場合
       if (!isRegistered) {
-        // 未登録の場合、保護者登録画面へ
-        router.push('/register/guardian')
+        // organizationが設定されている場合のみ新規登録に進める
+        if (organization) {
+          router.push('/register/guardian')
+        }
+        // organizationがない場合はAppContextでエラーページに遷移済み
         return
       }
       
+      // 登録済みだが生徒がいない場合
       if (students.length === 0) {
-        // 生徒が登録されていない場合
         router.push('/register/student')
         return
       }
@@ -41,8 +39,9 @@ export default function HomePage() {
     )
   }
 
-  if (!organization || !isRegistered || students.length === 0) {
-    return null // リダイレクト中
+  // リダイレクト中の場合は何も表示しない
+  if (!isRegistered || students.length === 0) {
+    return null
   }
 
   return (

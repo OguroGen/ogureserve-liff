@@ -16,69 +16,69 @@ export function AppProvider({ children }) {
   const searchParams = useSearchParams()
 
   useEffect(() => {
-    // URLパラメータから教室コードを取得
-    const orgCode = searchParams.get('org')
-    if (orgCode) {
-      fetchOrganization(orgCode)
-    }
-    
-    // LINE認証状態をチェック（今回は仮データ）
-    checkAuthStatus()
+    initializeApp()
   }, [searchParams])
 
-  const fetchOrganization = async (orgCode) => {
+  const initializeApp = async () => {
     try {
-      const response = await fetch(`/api/organizations/${orgCode}`)
-      if (response.ok) {
-        const orgData = await response.json()
-        setOrganization(orgData)
+      // LINE認証状態をチェック
+      const lineUser = await checkLineAuth()
+      setUser(lineUser)
+
+      // 既存ユーザーかチェック
+      const userInfo = await checkUserRegistration(lineUser.lineUserId)
+      
+      if (userInfo.isRegistered) {
+        // 登録済みユーザーの場合
+        // 登録済みユーザーは塾名のパラメーターが不要
+        setIsRegistered(true)
+        setOrganization(userInfo.organization)
+        setStudents(userInfo.students || [])
       } else {
-        console.error('教室が見つかりません')
+        // 未登録ユーザーの場合
+        const orgCode = searchParams.get('org')
+        if (orgCode) {
+          // 新規登録用URLの場合
+          const orgData = await fetchOrganization(orgCode)
+          setOrganization(orgData)
+        } else {
+          // パラメーターなしで未登録の場合はエラー
+          router.push('/error?message=無効なアクセスです。塾からのリンクを使用してください')
+          return
+        }
       }
     } catch (error) {
-      console.error('教室情報の取得に失敗しました:', error)
+      console.error('アプリの初期化に失敗しました:', error)
+      router.push('/error?message=システムエラーが発生しました')
+    } finally {
+      setLoading(false)
     }
   }
 
-  const checkAuthStatus = async () => {
+  const checkLineAuth = async () => {
     // 今回はLINE認証の仮実装
     // 実際にはLINE LIFF SDKを使用
-    const mockLineUser = {
+    return {
       lineUserId: 'mock_line_user_123',
       displayName: '山田太郎',
       pictureUrl: ''
     }
-    
-    setUser(mockLineUser)
-    
-    // 既存ユーザーかチェック
-    try {
-      const response = await fetch(`/api/guardians/check?lineUserId=${mockLineUser.lineUserId}`)
-      if (response.ok) {
-        const data = await response.json()
-        setIsRegistered(data.isRegistered)
-        if (data.guardian) {
-          // 既存ユーザーの場合、生徒情報も取得
-          fetchStudents(data.guardian.guardian_id)
-        }
-      }
-    } catch (error) {
-      console.error('ユーザー状態確認に失敗しました:', error)
-    }
-    
-    setLoading(false)
   }
 
-  const fetchStudents = async (guardianId) => {
-    try {
-      const response = await fetch(`/api/guardians/${guardianId}/students`)
-      if (response.ok) {
-        const data = await response.json()
-        setStudents(data.students || [])
-      }
-    } catch (error) {
-      console.error('生徒情報の取得に失敗しました:', error)
+  const checkUserRegistration = async (lineUserId) => {
+    const response = await fetch(`/api/guardians/check?lineUserId=${lineUserId}`)
+    if (response.ok) {
+      return await response.json()
     }
+    throw new Error('ユーザー確認に失敗しました')
+  }
+
+  const fetchOrganization = async (orgCode) => {
+    const response = await fetch(`/api/organizations/${orgCode}`)
+    if (response.ok) {
+      return await response.json()
+    }
+    throw new Error('教室が見つかりません')
   }
 
   const registerGuardian = async (guardianData) => {
@@ -123,7 +123,6 @@ export function AppProvider({ children }) {
 
       if (response.ok) {
         const data = await response.json()
-        // 生徒リストを更新
         setStudents(prev => [...prev, data.student])
         return data
       } else {
