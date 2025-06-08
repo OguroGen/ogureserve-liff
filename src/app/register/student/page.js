@@ -29,7 +29,7 @@ export default function StudentRegisterPage() {
 
   const fetchAvailableClasses = async () => {
     try {
-      const response = await fetch(`/api/organizations/${organization.organization_id}/classes`)
+      const response = await fetch(`/api/organizations/${organization.code}/classes`)
       if (response.ok) {
         const data = await response.json()
         setAvailableClasses(data.classes || [])

@@ -53,7 +53,7 @@ export function AppProvider({ children }) {
     
     // 既存ユーザーかチェック
     try {
-      const response = await fetch(`/api/guardians/${mockLineUser.lineUserId}/check`)
+      const response = await fetch(`/api/guardians/check?lineUserId=${mockLineUser.lineUserId}`)
       if (response.ok) {
         const data = await response.json()
         setIsRegistered(data.isRegistered)
