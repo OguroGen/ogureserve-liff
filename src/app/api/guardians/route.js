@@ -20,6 +20,31 @@ export async function POST(request) {
     const supabase = createServerClient()
     console.log('Supabaseクライアント作成完了')
     
+    // 同じLINE User IDと組織IDの組み合わせで既に登録されていないかチェック
+    const { data: existingGuardian, error: checkError } = await supabase
+      .from('guardians')
+      .select('guardian_id, name')
+      .eq('line_user_id', lineUserId)
+      .eq('organization_id', organizationId)
+      .single()
+    
+    if (checkError && checkError.code !== 'PGRST116') {
+      // PGRST116は「見つからない」エラーなので除外
+      console.error('既存保護者チェックエラー:', checkError)
+      return NextResponse.json(
+        { error: 'データベースエラーが発生しました' }, 
+        { status: 500 }
+      )
+    }
+    
+    if (existingGuardian) {
+      console.log('既に登録済み:', existingGuardian)
+      return NextResponse.json(
+        { error: 'この塾には既に登録済みです' }, 
+        { status: 409 }
+      )
+    }
+    
     // 挿入するデータ
     const insertData = {
       line_user_id: lineUserId,

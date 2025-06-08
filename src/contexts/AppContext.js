@@ -25,24 +25,39 @@ export function AppProvider({ children }) {
       const lineUser = await checkLineAuth()
       setUser(lineUser)
 
-      // 既存ユーザーかチェック
-      const userInfo = await checkUserRegistration(lineUser.lineUserId)
+      // まずURLパラメーターを確認
+      const orgCode = searchParams.get('org')
       
-      if (userInfo.isRegistered) {
-        // 登録済みユーザーの場合
-        // 登録済みユーザーは塾名のパラメーターが不要
-        setIsRegistered(true)
-        setOrganization(userInfo.organization)
-        setStudents(userInfo.students || [])
-      } else {
-        // 未登録ユーザーの場合
-        const orgCode = searchParams.get('org')
-        if (orgCode) {
-          // 新規登録用URLの場合
-          const orgData = await fetchOrganization(orgCode)
-          setOrganization(orgData)
+      if (orgCode) {
+        // パラメーター付きアクセスの場合
+        // 塾情報を取得
+        const orgData = await fetchOrganization(orgCode)
+        setOrganization(orgData)
+        
+        // 既存ユーザーかつ同じ塾への登録済みかチェック
+        const userInfo = await checkUserRegistration(lineUser.lineUserId)
+        
+        if (userInfo.isRegistered && 
+            userInfo.organization && 
+            userInfo.organization.organization_id === orgData.organization_id) {
+          // 同じ塾に登録済みの場合、通常のフローに進む
+          setIsRegistered(true)
+          setStudents(userInfo.students || [])
         } else {
-          // パラメーターなしで未登録の場合はエラー
+          // 未登録または別の塾の場合、新規登録フローに進む
+          setIsRegistered(false)
+        }
+      } else {
+        // パラメーターなしの場合、既存ユーザーかチェック
+        const userInfo = await checkUserRegistration(lineUser.lineUserId)
+        
+        if (userInfo.isRegistered) {
+          // 登録済みユーザーの場合
+          setIsRegistered(true)
+          setOrganization(userInfo.organization)
+          setStudents(userInfo.students || [])
+        } else {
+          // 未登録でパラメーターもない場合はエラー
           router.push('/error?message=無効なアクセスです。塾からのリンクを使用してください')
           return
         }
