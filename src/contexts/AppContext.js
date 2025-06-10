@@ -17,20 +17,19 @@ export function AppProvider({ children }) {
 
   useEffect(() => {
     initializeApp()
-  }, [searchParams])
+  }, [])
 
   const initializeApp = async () => {
     try {
-      // LINE認証状態をチェック
+      // LINE認証
       const lineUser = await checkLineAuth()
       setUser(lineUser)
 
-      // まずURLパラメーターを確認
+      // URLパラメーターをチェック
       const orgCode = searchParams.get('org')
       
       if (orgCode) {
-        // パラメーター付きアクセスの場合
-        // 塾情報を取得
+        // パラメーター付きアクセス
         const orgData = await fetchOrganization(orgCode)
         setOrganization(orgData)
         
@@ -38,41 +37,38 @@ export function AppProvider({ children }) {
         const userInfo = await checkUserRegistration(lineUser.lineUserId)
         
         if (userInfo.isRegistered && 
-            userInfo.organization && 
-            userInfo.organization.organization_id === orgData.organization_id) {
-          // 同じ塾に登録済みの場合、通常のフローに進む
+            userInfo.organization?.organization_id === orgData.organization_id) {
+          // 同じ塾に登録済み → 通常のホーム画面へ
           setIsRegistered(true)
           setStudents(userInfo.students || [])
         } else {
-          // 未登録または別の塾の場合、新規登録フローに進む
+          // 未登録または別の塾 → 新規登録フローへ
           setIsRegistered(false)
+          router.push('/register/guardian')
+          return
         }
       } else {
-        // パラメーターなしの場合、既存ユーザーかチェック
+        // パラメーターなし = 既存ユーザー
         const userInfo = await checkUserRegistration(lineUser.lineUserId)
         
         if (userInfo.isRegistered) {
-          // 登録済みユーザーの場合
           setIsRegistered(true)
           setOrganization(userInfo.organization)
           setStudents(userInfo.students || [])
         } else {
-          // 未登録でパラメーターもない場合はエラー
           router.push('/error?message=無効なアクセスです。塾からのリンクを使用してください')
           return
         }
       }
     } catch (error) {
-      console.error('アプリの初期化に失敗しました:', error)
-      router.push('/error?message=システムエラーが発生しました')
+      console.error('初期化エラー:', error)
+      router.push(`/error?message=システムエラー: ${error.message}`)
     } finally {
       setLoading(false)
     }
   }
 
   const checkLineAuth = async () => {
-    // 今回はLINE認証の仮実装
-    // 実際にはLINE LIFF SDKを使用
     return {
       lineUserId: 'mock_line_user_123',
       displayName: '山田太郎',
@@ -97,55 +93,45 @@ export function AppProvider({ children }) {
   }
 
   const registerGuardian = async (guardianData) => {
-    try {
-      const response = await fetch('/api/guardians', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...guardianData,
-          lineUserId: user.lineUserId,
-          organizationId: organization.organization_id
-        }),
-      })
+    const response = await fetch('/api/guardians', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...guardianData,
+        lineUserId: user.lineUserId,
+        organizationId: organization.organization_id
+      }),
+    })
 
-      if (response.ok) {
-        const data = await response.json()
-        setIsRegistered(true)
-        return data
-      } else {
-        throw new Error('保護者登録に失敗しました')
-      }
-    } catch (error) {
-      console.error('保護者登録エラー:', error)
-      throw error
+    if (response.ok) {
+      const data = await response.json()
+      setIsRegistered(true)
+      return data
+    } else {
+      throw new Error('保護者登録に失敗しました')
     }
   }
 
   const registerStudent = async (studentData) => {
-    try {
-      const response = await fetch('/api/students', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...studentData,
-          guardianLineUserId: user.lineUserId
-        }),
-      })
+    const response = await fetch('/api/students', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...studentData,
+        guardianLineUserId: user.lineUserId
+      }),
+    })
 
-      if (response.ok) {
-        const data = await response.json()
-        setStudents(prev => [...prev, data.student])
-        return data
-      } else {
-        throw new Error('生徒登録に失敗しました')
-      }
-    } catch (error) {
-      console.error('生徒登録エラー:', error)
-      throw error
+    if (response.ok) {
+      const data = await response.json()
+      setStudents(prev => [...prev, data.student])
+      return data
+    } else {
+      throw new Error('生徒登録に失敗しました')
     }
   }
 

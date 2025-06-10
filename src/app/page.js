@@ -9,24 +9,11 @@ export default function HomePage() {
   const router = useRouter()
 
   useEffect(() => {
-    if (!loading) {
-      // 未登録ユーザーの場合
-      if (!isRegistered) {
-        // organizationが設定されている場合のみ新規登録に進める
-        if (organization) {
-          router.push('/register/guardian')
-        }
-        // organizationがない場合はAppContextでエラーページに遷移済み
-        return
-      }
-      
-      // 登録済みだが生徒がいない場合
-      if (students.length === 0) {
-        router.push('/register/student')
-        return
-      }
+    if (!loading && isRegistered && students.length === 0) {
+      // 登録済みだが生徒がいない場合のみ生徒登録へ
+      router.push('/register/student')
     }
-  }, [loading, organization, isRegistered, students, router])
+  }, [loading, isRegistered, students, router])
 
   if (loading) {
     return (
@@ -39,9 +26,10 @@ export default function HomePage() {
     )
   }
 
-  // リダイレクト中の場合は何も表示しない
+  // 新規登録フローは AppContext で /register/guardian に直行するので、
+  // ここには既存ユーザーしか来ない
   if (!isRegistered || students.length === 0) {
-    return null
+    return null // リダイレクト中
   }
 
   return (
@@ -63,12 +51,6 @@ export default function HomePage() {
           {students.map((student) => (
             <StudentCard key={student.student_id} student={student} />
           ))}
-          
-          {/* 全選択 */}
-          <label className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border-2 border-dashed border-blue-200">
-            <input type="checkbox" className="w-5 h-5 text-blue-600" />
-            <span className="text-blue-700 font-medium">すべての生徒を選択</span>
-          </label>
         </div>
       </div>
 

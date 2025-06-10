@@ -36,6 +36,7 @@ export default function RootLayout({ children }) {
                 <NavButton href="/absence" icon="✋" label="欠席" />
                 <NavButton href="/makeup" icon="🔄" label="振替" />
                 <NavButton href="/history" icon="📋" label="履歴" />
+                <NavButton href="/settings" icon="⚙️" label="設定" />
               </div>
             </nav>
 
@@ -53,9 +54,9 @@ function NavButton({ href, icon, label }) {
   return (
     <a 
       href={href}
-      className="flex flex-col items-center py-2 px-4 text-gray-600 hover:text-blue-600 transition-colors"
+      className="flex flex-col items-center py-2 px-3 text-gray-600 hover:text-blue-600 transition-colors"
     >
-      <span className="text-xl mb-1">{icon}</span>
+      <span className="text-lg mb-1">{icon}</span>
       <span className="text-xs">{label}</span>
     </a>
   )

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useApp } from '../../../contexts/AppContext'
 import { useRouter } from 'next/navigation'
 
@@ -14,6 +14,12 @@ export default function GuardianRegisterPage() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  // デバッグ用
+  useEffect(() => {
+    console.log('📋 保護者登録ページ - organization:', organization)
+    console.log('📋 保護者登録ページ - user:', user)
+  }, [organization, user])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -38,9 +44,14 @@ export default function GuardianRegisterPage() {
   }
 
   if (!organization) {
+    console.log('❌ 教室情報が取得できませんでした')
     return (
       <div className="text-center py-8">
-        <p className="text-red-600">教室情報が取得できませんでした</p>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+          <div className="text-red-600 text-6xl mb-4">⚠️</div>
+          <h2 className="text-lg font-bold text-red-800 mb-2">教室情報が取得できませんでした</h2>
+          <p className="text-red-600">正しいURLからアクセスしてください</p>
+        </div>
       </div>
     )
   }
@@ -50,10 +61,7 @@ export default function GuardianRegisterPage() {
       {/* ウェルカムメッセージ */}
       <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
         <h2 className="text-lg font-bold text-blue-800 mb-2">
-          {organization.name}にご入会いただき
-        </h2>
-        <h2 className="text-lg font-bold text-blue-800 mb-2">
-          ありがとうございます
+          {organization.name}へようこそ
         </h2>
         <p className="text-sm text-blue-600">
           初回のみ、保護者様とお子様の情報を登録させていただきます
